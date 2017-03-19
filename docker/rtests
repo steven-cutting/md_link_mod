@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+if [ "$1" = 'help' ]; then
+  printf "\n\trtest [build|run] [<test_dir_name>]\n\n"
+  printf "\tbuild - Run 'docker-compose build' for each test dir.\n"
+  printf "\t        Or supply a test dir name to only build that test dir.\n"
+  printf "\trun - Run 'docker-compose run test' for each test dir.\n"
+  printf "\t        Or supply a test dir name to only run that test dir.\n"
+  printf "\thelp - Show this message.\n\n"
+  printf "\tNo argument is equivalent to 'run'.\n\n"
+
+elif [ "$#" -gt 2 ]; then
+  exec ./rtests "help"
+
+elif [ -d "$2" ] && [ "$1" = 'build' ]; then
+  printf "\nBuilding $2\n\n"
+  cd "$2" && docker-compose build
+
+elif [ -d "$2" ] && [ "$1" = 'run' ]; then
+  printf "\nRunning $2\n\n"
+  cd "$2" && docker-compose run --rm test 
+
+elif [ $# -eq 1 ] && [ "$1" = 'build' ]; then
+  echo "Building Test Images"
+  exec find . -name "test_*" -type d -exec sh -c '(cd {} && docker-compose build)' ';'
+
+elif [ $# -eq 1 ] && [ "$1" = 'run' ]; then
+  echo "Running tests"
+  exec find . -name "test_*" -type d -exec sh -c '(cd {} && docker-compose run --rm test)' ';'
+
+elif [ $# -eq 0 ]; then
+  exec ./rtests "run"
+
+else
+  exec ./rtests "help"
+fi
